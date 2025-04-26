@@ -1,0 +1,109 @@
+---
+title: "Gabriel Valvassori"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages # nomes únicos
+#| include: false # nao inclui o resultado no doc
+
+library(tidyverse) # pacote ggplot2 (graficos)
+library(WDI) # pacote dos dados
+
+# BASES DE DADOS
+# COLOCAR OS TRÊS OBJETOS DE DADOS
+# DADOS EM PAINEL 
+exportacoesmateriaprima <- WDI(country = 'all',
+                               indicator = 'TX.VAL.AGRI.ZS.UN')
+# CORTE TRANSVERSAL 
+exportacoesmateriaprima2 <- WDI(country = 'all',
+                               indicator = 'TX.VAL.AGRI.ZS.UN',
+                               star = 2020,end = 2024)
+# SÉRIE TEMPORAL
+exportacoesmateriaprima3<- WDI(country = 'BR',
+                               indicator = 'TX.VAL.AGRI.ZS.UN',
+                               star = 2014, end = 2024)
+
+```
+
+## Grafico Dados Em Painel
+
+```{r}
+#| label: dadosempainel
+#| warning: false
+#| echo: false
+
+grafexportpainel <- ggplot(exportacoesmateriaprima, 
+                           aes(x = year, y = TX.VAL.AGRI.ZS.UN)) + 
+  geom_bar(stat = "identity", fill = "steelblue") +  # Colore as barras de azul
+  labs(title = "Quantidade de Exportações de Matéria Prima por Ano", 
+       x = "Ano", 
+       y = "Quantidade") +
+  theme_minimal() +  # Tema limpo e moderno
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),  # Centraliza e estiliza o título
+    axis.title.x = element_text(size = 12, face = "bold"),             # Eixo X
+    axis.title.y = element_text(size = 12, face = "bold"),             # Eixo Y
+    axis.text.x = element_text(angle = 45, hjust = 1)                  # Inclina rótulos do eixo X
+  )
+
+print(grafexportpainel)
+```
+
+## Grafico Corte Transversal
+
+```{r}
+#| label: cortetransversal
+#| warning: false
+#| echo: false 
+
+grafexportcorte <- ggplot(exportacoesmateriaprima2, 
+                          aes(x = year, y = TX.VAL.AGRI.ZS.UN)) +
+  geom_bar(stat = "identity", fill = "steelblue") +  # Adiciona cor nas barras
+  labs(
+    title = "Exportações de Matéria-Prima ao Longo dos Anos",  # Novo título
+    x = "Ano", 
+    y = "Quantidade Exportada"
+  ) +
+  theme_minimal() +  # Deixa o gráfico com um estilo mais limpo
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),  # Centralizar e destacar o título
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+
+print(grafexportcorte)
+```
+
+## Grafico Série Temporal
+
+```{r}
+#| label: serietemporal
+#| warning: false
+#| echo: false 
+
+grafexportserie <- ggplot(exportacoesmateriaprima3, 
+                          aes(x = factor(year), y = TX.VAL.AGRI.ZS.UN)) + 
+  geom_bar(stat = "identity", fill = "#0072B2", width = 0.7) +
+  geom_text(aes(label = round(TX.VAL.AGRI.ZS.UN, 1)),  # Adiciona os números no topo das barras
+            vjust = -0.5, size = 4, color = "black") +  # Ajuste vertical e cor do texto
+  labs(
+    title = "Evolução Anual das Exportações de Matéria-Prima no Brasil",  # Novo título
+    x = "Ano", 
+    y = "Quantidade Exportada"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold", color = "#003366"),
+    axis.title.x = element_text(margin = margin(t = 10)),
+    axis.title.y = element_text(margin = margin(r = 10)),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+print(grafexportserie)
+
+
+```
