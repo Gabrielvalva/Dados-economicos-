@@ -1,109 +1,168 @@
 ---
-title: "Gabriel Valvassori"
+title: "**Exportações de Matéria-Prima Agrícola**"
 format: html
 editor: visual
 ---
 
 ```{r}
-#| label: load-packages # nomes únicos
-#| include: false # nao inclui o resultado no doc
+#| label: load-packages
+#| include: false
+library(tidyverse)
+library(WDI)
+library(scales)
+library(gganimate)
+library(gifski)
+library(quarto)
 
-library(tidyverse) # pacote ggplot2 (graficos)
-library(WDI) # pacote dos dados
+# Carregamento dos dados do WDI
+exportacoes_agricolas <- WDI(
+  indicator = "TX.VAL.AGRI.ZS.UN",
+  start = 2000,
+  end = 2024,
+  extra = TRUE
+) %>%
+  filter(!is.na(TX.VAL.AGRI.ZS.UN), region != "Aggregates")
 
-# BASES DE DADOS
-# COLOCAR OS TRÊS OBJETOS DE DADOS
-# DADOS EM PAINEL 
-exportacoesmateriaprima <- WDI(country = 'all',
-                               indicator = 'TX.VAL.AGRI.ZS.UN')
-# CORTE TRANSVERSAL 
-exportacoesmateriaprima2 <- WDI(country = 'all',
-                               indicator = 'TX.VAL.AGRI.ZS.UN',
-                               star = 2020,end = 2024)
-# SÉRIE TEMPORAL
-exportacoesmateriaprima3<- WDI(country = 'BR',
-                               indicator = 'TX.VAL.AGRI.ZS.UN',
-                               star = 2014, end = 2024)
+# Top 10 países por média no período
+top10_global <- exportacoes_agricolas %>%
+  group_by(country) %>%
+  summarise(media = mean(TX.VAL.AGRI.ZS.UN, na.rm = TRUE)) %>%
+  arrange(desc(media)) %>%
+  slice_head(n = 10) %>%
+  pull(country)
 
+top10_dados_global <- exportacoes_agricolas %>%
+  filter(country %in% top10_global)
+
+# Corte transversal 2020-2024
+corte_2020_2024 <- exportacoes_agricolas %>%
+  filter(year >= 2020 & year <= 2024)
+
+top10_corte <- corte_2020_2024 %>%
+  group_by(country) %>%
+  summarise(media = mean(TX.VAL.AGRI.ZS.UN, na.rm = TRUE)) %>%
+  arrange(desc(media)) %>%
+  slice_head(n = 10) %>%
+  pull(country)
+
+corte_top10_dados <- corte_2020_2024 %>%
+  filter(country %in% top10_corte)
+
+# Série temporal do Brasil
+brasil_dados <- exportacoes_agricolas %>%
+  filter(iso2c == "BR", year >= 2014)
 ```
 
-## Grafico Dados Em Painel
+## **Introdução**
+
+As exportações de matéria-prima agrícola representam uma parcela significativa da pauta comercial de diversos países, especialmente aqueles com vocação agroexportadora. Este tipo de exportação inclui produtos como soja, algodão, madeira em bruto, café não torrado, entre outros. Tais bens são classificados como de **baixo valor agregado**, mas exercem forte influência na balança comercial e na política econômica de muitas nações.
+
+Neste estudo, analisamos a evolução histórica da participação desses produtos no total exportado por diferentes países, destacando os **10 maiores exportadores relativos** com base em dados do Banco Mundial, no período de **2000 a 2024**. A análise contempla ainda um recorte mais recente (2020–2024) e um foco especial na trajetória do Brasil na última década.
+
+## **Objetivo**
+
+O principal objetivo desta análise é compreender a relevância das exportações de matéria-prima agrícola como proporção das exportações totais de mercadorias. Os gráficos e comparações visam:
+
+-    Identificar os países mais dependentes desse tipo de exportação;
+
+-    Observar a evolução histórica das exportações agrícolas como participação relativa;
+
+-    Analisar as mudanças recentes no período pós-pandemia (2020–2024)
+
+-    Estudar em profundidade o caso brasileiro entre 2014 e 2024.
+
+## **Dados Utilizados**
+
+Os dados foram obtidos por meio da API do **Banco Mundial (WDI)** utilizando o indicador:
+
+> **TX.VAL.AGRI.ZS.UN** – Exportações de matéria-prima agrícola (% do total das exportações de mercadorias).
+
+O conjunto abrange o período de 2000 a 2024, com destaque para os 10 países com maiores médias no período e para os líderes relativos no recorte 2020–2024. A série temporal do Brasil também é analisada separadamente.
+
+## **Metodologia** 
+
+-    **Fonte dos Dados:** Banco Mundial via pacote WDI no R.
+
+-   **Critério de Seleção:** Países com maior média percentual de exportações agrícolas no período total (2000–2024) e no recorte recente (2020–2024).
+
+## **Análise da Evolução Global (2000–2024)**
+
+O gráfico animado apresenta a evolução da participação das exportações de matéria-prima agrícola nas exportações totais dos 10 países mais relevantes entre 2000 e 2024. Observa-se que:
+
+-    Países africanos e latino-americanos tendem a apresentar maior dependência de produtos agrícolas básicos;
+
+-    Alguns países mantêm estabilidade ao longo do tempo, enquanto outros demonstram oscilações ligadas a choques de mercado e políticas comerciais;
+
+-    A crise de 2008 e a pandemia de 2020 provocaram alterações visíveis na estrutura das exportações de vários países.
 
 ```{r}
-#| label: dadosempainel
-#| warning: false
+#| label: global-animation
 #| echo: false
+# Gráfico animado global 2000–2024
 
-grafexportpainel <- ggplot(exportacoesmateriaprima, 
-                           aes(x = year, y = TX.VAL.AGRI.ZS.UN)) + 
-  geom_bar(stat = "identity", fill = "steelblue") +  # Colore as barras de azul
-  labs(title = "Quantidade de Exportações de Matéria Prima por Ano", 
-       x = "Ano", 
-       y = "Quantidade") +
-  theme_minimal() +  # Tema limpo e moderno
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),  # Centraliza e estiliza o título
-    axis.title.x = element_text(size = 12, face = "bold"),             # Eixo X
-    axis.title.y = element_text(size = 12, face = "bold"),             # Eixo Y
-    axis.text.x = element_text(angle = 45, hjust = 1)                  # Inclina rótulos do eixo X
-  )
-
-print(grafexportpainel)
-```
-
-## Grafico Corte Transversal
-
-```{r}
-#| label: cortetransversal
-#| warning: false
-#| echo: false 
-
-grafexportcorte <- ggplot(exportacoesmateriaprima2, 
-                          aes(x = year, y = TX.VAL.AGRI.ZS.UN)) +
-  geom_bar(stat = "identity", fill = "steelblue") +  # Adiciona cor nas barras
-  labs(
-    title = "Exportações de Matéria-Prima ao Longo dos Anos",  # Novo título
-    x = "Ano", 
-    y = "Quantidade Exportada"
-  ) +
-  theme_minimal() +  # Deixa o gráfico com um estilo mais limpo
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),  # Centralizar e destacar o título
-    axis.title = element_text(size = 14),
-    axis.text = element_text(size = 12)
-  )
-
-print(grafexportcorte)
-```
-
-## Grafico Série Temporal
-
-```{r}
-#| label: serietemporal
-#| warning: false
-#| echo: false 
-
-grafexportserie <- ggplot(exportacoesmateriaprima3, 
-                          aes(x = factor(year), y = TX.VAL.AGRI.ZS.UN)) + 
-  geom_bar(stat = "identity", fill = "#0072B2", width = 0.7) +
-  geom_text(aes(label = round(TX.VAL.AGRI.ZS.UN, 1)),  # Adiciona os números no topo das barras
-            vjust = -0.5, size = 4, color = "black") +  # Ajuste vertical e cor do texto
-  labs(
-    title = "Evolução Anual das Exportações de Matéria-Prima no Brasil",  # Novo título
-    x = "Ano", 
-    y = "Quantidade Exportada"
-  ) +
+ggplot(top10_dados_global, aes(x = reorder(country, -TX.VAL.AGRI.ZS.UN),
+                                y = TX.VAL.AGRI.ZS.UN, fill = country)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Exportações Agrícolas (% das Exportações Totais)",
+       subtitle = "Ano: {frame_time}", x = "País", y = "% das Exportações") +
   theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 18, face = "bold", color = "#003366"),
-    axis.title.x = element_text(margin = margin(t = 10)),
-    axis.title.y = element_text(margin = margin(r = 10)),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor = element_blank()
-  )
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  transition_time(year) +
+  ease_aes('linear')
+```
 
-print(grafexportserie)
+## **Corte Transversal 2020–2024**
 
+Durante o período mais recente, marcado por impactos da pandemia e pela alta dos preços agrícolas, alguns países viram sua dependência por commodities agrícolas crescer. O corte transversal mostra os 10 países onde a agricultura ganhou maior peso proporcionalmente, refletindo:
+
+A resiliência do setor primário;
+
+A possível retração de outros setores exportadores (ex.: manufaturas);
+
+Um cenário onde países em desenvolvimento reforçam seu papel de fornecedores globais de alimentos.
+
+```{r}
+#| label: corte-transversal
+#| echo: false
+# Gráfico animado 2020–2024
+
+ggplot(corte_top10_dados, aes(x = reorder(country, -TX.VAL.AGRI.ZS.UN),
+                               y = TX.VAL.AGRI.ZS.UN, fill = country)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Exportações Agrícolas - Top 10 Países (2020–2024)",
+       subtitle = "Ano: {frame_time}", x = "País", y = "% das Exportações") +
+  theme_minimal(base_size = 14) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  transition_time(year) +
+  ease_aes('linear')
+```
+
+## **Série Temporal do Brasil (2014–2024)**
+
+O gráfico exclusivo do Brasil revela uma trajetória de relativa estabilidade, com oscilações pontuais nos anos de crise. Destaques incluem:
+
+-   O crescimento da soja como principal produto da pauta exportadora;
+
+-    O impacto da guerra comercial EUA-China, que aumentou a demanda chinesa por produtos brasileiros;
+
+-    A valorização das commodities em 2021–2022, elevando temporariamente a participação da agricultura no total exportado.
+
+Essa tendência confirma o protagonismo do agronegócio no comércio exterior brasileiro, mas também acende alertas sobre a necessidade de maior diversificação produtiva.
+
+```{r}
+#| label: brasil-time-series
+#| echo: false
+# Série temporal do Brasil
+
+ggplot(brasil_dados, aes(x = year, y = TX.VAL.AGRI.ZS.UN)) +
+  geom_line(color = "#2E86AB", size = 1.5) +
+  geom_point(color = "#2E86AB", size = 3) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  scale_x_continuous(breaks = 2014:2024) +
+  labs(title = "Brasil: Exportações de Matéria-Prima Agrícola (2014–2024)",
+       x = "Ano", y = "% das Exportações Totais") +
+  theme_minimal(base_size = 14)
 
 ```
