@@ -1,0 +1,139 @@
+---
+title: "**Dinâmica do Uso da Terra Agrícola: Comparativo Global e Foco no Brasil**"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(WDI)
+library(tidyverse)
+library(ggplot2)
+library(gganimate)
+library(dplyr)
+library(scales)
+
+areasagricolas <- WDI(country = 'all',
+indicator = 'AG.LND.AGRI.K2')
+top10_paises <- c("RU", "CA", "CN", "US", "BR", "AU", "IN", "AR", "KZ", "DZ")
+areasagricolas_filtrado <- areasagricolas %>%
+  filter(iso2c %in% top10_paises, year >= 1996, year <= 2020)
+
+
+```
+
+```{r}
+#| label: oi
+#| include: false
+
+
+```
+
+## Introdução
+
+A área destinada à agricultura representa o conjunto de terras utilizadas para atividades agropecuárias, incluindo terrenos cultiváveis, plantações permanentes e pastagens. Esse indicador é fundamental para compreender como o solo é utilizado e qual é o potencial produtivo de uma nação. Neste trabalho, examinamos a evolução das áreas agrícolas nos países com maior extensão voltada à produção rural, utilizando dados fornecidos pelo Banco Mundial para o período de 1996 a 2020.
+
+## Objetivo
+
+Este estudo tem como propósito examinar a evolução das áreas agrícolas ao longo dos anos, observando tendências de expansão, retração ou estabilidade entre os países analisados. Também se propõe a comparar, no ano mais recente da série histórica, as nações com maiores extensões de terras destinadas à agricultura, buscando evidenciar padrões globais e discutir possíveis impactos econômicos e ambientais associados.
+
+## Evolução da Área de Terra Agrícola (1996–2020)
+
+O gráfico animado ilustra a evolução da área agrícola dos 10 países com maior extensão de terras destinadas à agricultura entre os anos de 1996 e 2020. Ao longo desse período, é possível acompanhar as variações anuais no uso do solo, revelando padrões de crescimento, estabilidade ou retração. Observa-se uma configuração relativamente estável, com países como China, Índia, Estados Unidos e Brasil liderando consistentemente em termos de área agrícola. China e Estados Unidos se destacam por apresentarem as maiores extensões, enquanto Índia e Brasil demonstram um aumento significativo, impulsionado pela expansão do agronegócio e pela incorporação de novas áreas produtivas. Fatores como políticas públicas, aumento da população e demanda internacional por alimentos contribuem diretamente para essa dinâmica. Outros países, como Rússia e Austrália, também figuram entre os principais, reforçando a diversidade geográfica da produção agrícola global. A animação, portanto, evidencia não apenas os números absolutos, mas também as transformações e tendências no uso da terra ao longo de um quarto de século.
+
+```{r}
+#| label: grafico-painel
+#| warning: false
+#| echo: false
+
+# Filtrar dados para 1996–2020
+areasagricolas_filtrado <- areasagricolas_filtrado %>%
+  filter(year >= 1996, year <= 2020, !is.na(AG.LND.AGRI.K2)) %>%
+  arrange(year, desc(AG.LND.AGRI.K2))
+
+# Criar gráfico animado de barras para 1996–2020
+ ggplot(areasagricolas_filtrado,
+                             aes(x = reorder(country, AG.LND.AGRI.K2),
+                                 y = AG.LND.AGRI.K2,
+                                 fill = country)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Área Agrícola por País (1996–2020)",
+    subtitle = "Ano: {closest_state}",
+    x = "País",
+    y = "Área Agrícola (km²)"
+  ) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal(base_size = 14) +
+  transition_states(year, transition_length = 2, state_length = 1) +
+  ease_aes("cubic-in-out")
+
+```
+
+## 
+
+## Evolução da Área de Terra Agrícola (2015–2020)
+
+Este gráfico destaca a evolução da área agrícola nos 10 maiores países entre os anos de 2015 e 2020. Os dados revelam que Índia, China, Estados Unidos e Brasil continuam liderando em extensão de terras destinadas à atividade agropecuária. Ao longo desse período, nota-se relativa estabilidade na hierarquia entre os países, embora pequenas variações anuais indiquem ajustes no uso do solo, influenciados por políticas setoriais, demandas econômicas e alterações na produção agrícola. A liderança tende a se concentrar em países com grandes territórios, o que não necessariamente reflete maior produtividade. No caso brasileiro, observa-se um crescimento gradual da área agrícola, sinalizando a continuidade da expansão do setor agropecuário no país.
+
+```{r}
+#| label: grafico-corte
+#| warning: false
+#| echo: false
+
+# Filtrar dados apenas para 2015–2020
+areasagricolas_2015_2020 <- areasagricolas_filtrado %>%
+  filter(year >= 2015, year <= 2020, !is.na(AG.LND.AGRI.K2)) %>%
+  arrange(year, desc(AG.LND.AGRI.K2))
+
+# Criar gráfico animado de barras para 2015–2020
+ ggplot(areasagricolas_2015_2020,
+                            aes(x = reorder(country, AG.LND.AGRI.K2),
+                                y = AG.LND.AGRI.K2,
+                                fill = country)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Área Agrícola por País (2015–2020)",
+    subtitle = "Ano: {closest_state}",
+    x = "País",
+    y = "Área Agrícola (km²)"
+  ) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal(base_size = 14) +
+  transition_states(year, transition_length = 2, state_length = 1) +
+  ease_aes("cubic-in-out")
+
+```
+
+## Área de Terra Agrícola no Brasil (1996–2020)
+
+O gráfico apresenta a evolução da área agrícola no Brasil entre os anos de 1996 e 2020, revelando uma tendência de crescimento contínuo ao longo do período. Destacam-se momentos de expansão mais intensa, especialmente na segunda metade dos anos 2000, impulsionados pelo fortalecimento do agronegócio e pela expansão de culturas como a soja, além da atividade pecuária. Esse avanço ocorreu principalmente nas regiões Centro-Oeste e Norte do país. O aumento constante da área utilizada para a agricultura evidencia a crescente relevância do setor agropecuário na economia nacional. Por outro lado, o processo de ampliação das fronteiras agrícolas levanta debates importantes sobre sustentabilidade, conservação ambiental e uso racional dos recursos naturais.
+
+```{r}
+#| label: grafico-brasil
+#| warning: false
+#| echo: false
+
+# Filtrar dados do Brasil entre 1996 e 2020
+brasil_agricola <- areasagricolas_filtrado %>%
+  filter(country == "Brazil", year >= 1996, year <= 2020)
+
+# Criar gráfico de série temporal
+graf_brasil <- ggplot(brasil_agricola, aes(x = year, y = AG.LND.AGRI.K2)) +
+  geom_line(color = "#2E8B57", size = 1.2) +
+  geom_point(color = "#2E8B57", size = 2) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Evolução da Área Agrícola no Brasil (1996–2020)",
+    x = "Ano",
+    y = "Área Agrícola (km²)"
+  ) +
+  theme_minimal(base_size = 14)
+
+# Exibir gráfico
+print(graf_brasil)
+```
