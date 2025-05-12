@@ -14,6 +14,7 @@ library(ggplot2)
 library(gganimate)
 library(dplyr)
 library(scales)
+library(png)
 
 areasagricolas <- WDI(country = 'all',
 indicator = 'AG.LND.AGRI.K2')
@@ -75,9 +76,9 @@ areasagricolas_filtrado <- areasagricolas_filtrado %>%
 
 ## 
 
-## Evolução da Área de Terra Agrícola (2015–2020)
+## Evolução da Área de Terra Agrícola (2020)
 
-Este gráfico destaca a evolução da área agrícola nos 10 maiores países entre os anos de 2015 e 2020. Os dados revelam que Índia, China, Estados Unidos e Brasil continuam liderando em extensão de terras destinadas à atividade agropecuária. Ao longo desse período, nota-se relativa estabilidade na hierarquia entre os países, embora pequenas variações anuais indiquem ajustes no uso do solo, influenciados por políticas setoriais, demandas econômicas e alterações na produção agrícola. A liderança tende a se concentrar em países com grandes territórios, o que não necessariamente reflete maior produtividade. No caso brasileiro, observa-se um crescimento gradual da área agrícola, sinalizando a continuidade da expansão do setor agropecuário no país.
+Este gráfico destaca a evolução da área agrícola nos 10 maiores países em 2020. Os dados revelam que Índia, China, Estados Unidos e Brasil continuam liderando em extensão de terras destinadas à atividade agropecuária. Ao longo desse período, nota-se relativa estabilidade na hierarquia entre os países, embora pequenas variações anuais indiquem ajustes no uso do solo, influenciados por políticas setoriais, demandas econômicas e alterações na produção agrícola. A liderança tende a se concentrar em países com grandes territórios, o que não necessariamente reflete maior produtividade. No caso brasileiro, observa-se um crescimento gradual da área agrícola, sinalizando a continuidade da expansão do setor agropecuário no país.
 
 ```{r}
 #| label: grafico-corte
@@ -86,18 +87,18 @@ Este gráfico destaca a evolução da área agrícola nos 10 maiores países ent
 
 # Filtrar dados apenas para 2015–2020
 areasagricolas_2015_2020 <- areasagricolas_filtrado %>%
-  filter(year >= 2015, year <= 2020, !is.na(AG.LND.AGRI.K2)) %>%
+  filter(year >= 2020, year <= 2020, !is.na(AG.LND.AGRI.K2)) %>%
   arrange(year, desc(AG.LND.AGRI.K2))
 
 # Criar gráfico animado de barras para 2015–2020
- ggplot(areasagricolas_2015_2020,
+  ggplot(areasagricolas_2015_2020,
                             aes(x = reorder(country, AG.LND.AGRI.K2),
                                 y = AG.LND.AGRI.K2,
                                 fill = country)) +
   geom_col(show.legend = FALSE) +
   coord_flip() +
   labs(
-    title = "Área Agrícola por País (2015–2020)",
+    title = "Área Agrícola por País (2020)",
     subtitle = "Ano: {closest_state}",
     x = "País",
     y = "Área Agrícola (km²)"
