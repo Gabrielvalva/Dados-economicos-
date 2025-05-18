@@ -1,5 +1,5 @@
 ---
-title: "**Dinâmica do Uso da Terra Agrícola: Comparativo Global e Foco no Brasil**"
+title: "**Dinâmica do PIB per capita: Comparativo Global e Foco no Brasil**"
 format: html
 editor: visual
 ---
@@ -11,10 +11,7 @@ editor: visual
 library(WDI)
 library(tidyverse)
 library(ggplot2)
-library(gganimate)
-library(dplyr)
 library(scales)
-library(png)
 
 areasagricolas <- WDI(country = 'all',
 indicator = 'AG.LND.AGRI.K2')
@@ -34,107 +31,144 @@ areasagricolas_filtrado <- areasagricolas %>%
 
 ## Introdução
 
-A área destinada à agricultura representa o conjunto de terras utilizadas para atividades agropecuárias, incluindo terrenos cultiváveis, plantações permanentes e pastagens. Esse indicador é fundamental para compreender como o solo é utilizado e qual é o potencial produtivo de uma nação. Neste trabalho, examinamos a evolução das áreas agrícolas nos países com maior extensão voltada à produção rural, utilizando dados fornecidos pelo Banco Mundial para o período de 1996 a 2020.
+O Produto Interno Bruto (PIB) per capita é o valor total de bens e serviços produzidos por um país dividido pelo número de habitantes. Ele indica, em média, quanto cada pessoa contribui para a economia e serve como uma medida do padrão de vida da população. Como um indicador essencial, o PIB per capita permite avaliar o padrão de vida médio e o crescimento econômico de diferentes países.
+
+Este trabalho analisa a evolução do PIB per capita em dólares correntes para 10 países de alta renda entre 1990 e 2023, além de um foco especial no Brasil. Utilizando dados do Banco Mundial, exploramos tendências históricas e comparações regionais, buscando compreender as dinâmicas econômicas globais e os desafios enfrentados por essas nações.
 
 ## Objetivo
 
-Este estudo tem como propósito examinar a evolução das áreas agrícolas ao longo dos anos, observando tendências de expansão, retração ou estabilidade entre os países analisados. Também se propõe a comparar, no ano mais recente da série histórica, as nações com maiores extensões de terras destinadas à agricultura, buscando evidenciar padrões globais e discutir possíveis impactos econômicos e ambientais associados.
+Analisar a evolução temporal do PIB per capita entre 1990 e 2023 nos 10 países de alta renda selecionados — Estados Unidos, Suíça, Noruega, Singapura, Holanda, Austrália, Canadá, Alemanha, Japão e Suécia — e realizar um corte transversal para comparar os valores referentes ao ano de 2020. Além disso, apresentar a evolução isolada do Brasil para contextualizar sua trajetória econômica dentro do cenário global.
 
-## Evolução da Área de Terra Agrícola (1996–2020)
+## Evolução do PIB per capita dos 10 países selecionados (1990–2023)
 
-O gráfico animado ilustra a evolução da área agrícola dos 10 países com maior extensão de terras destinadas à agricultura entre os anos de 1996 e 2020. Ao longo desse período, é possível acompanhar as variações anuais no uso do solo, revelando padrões de crescimento, estabilidade ou retração. Observa-se uma configuração relativamente estável, com países como China, Índia, Estados Unidos e Brasil liderando consistentemente em termos de área agrícola. China e Estados Unidos se destacam por apresentarem as maiores extensões, enquanto Índia e Brasil demonstram um aumento significativo, impulsionado pela expansão do agronegócio e pela incorporação de novas áreas produtivas. Fatores como políticas públicas, aumento da população e demanda internacional por alimentos contribuem diretamente para essa dinâmica. Outros países, como Rússia e Austrália, também figuram entre os principais, reforçando a diversidade geográfica da produção agrícola global. A animação, portanto, evidencia não apenas os números absolutos, mas também as transformações e tendências no uso da terra ao longo de um quarto de século.
+Este gráfico apresenta a trajetória do PIB per capita em dólares correntes para 10 países economicamente relevantes entre 1990 e 2023. Entre eles, destacam-se consistentemente:
+
+-    **Suíça** e **Noruega**, que lideram com os maiores valores de PIB per capita, refletindo economias altamente desenvolvidas, com elevados níveis de produtividade e qualidade de vida.
+
+-    **Estados Unidos**, que mantém uma posição de destaque, demonstrando uma economia sólida e dinâmica.
+
+-    Outros países, como **Singapura**, **Suécia** e **Holanda**, também apresentam alto desempenho, demonstrando crescimento estável ao longo do período.
 
 ```{r}
 #| label: grafico-painel
 #| warning: false
 #| echo: false
 
-# Filtrar dados para 1996–2020
-areasagricolas_filtrado <- areasagricolas_filtrado %>%
-  filter(year >= 1996, year <= 2020, !is.na(AG.LND.AGRI.K2)) %>%
-  arrange(year, desc(AG.LND.AGRI.K2))
+# Países selecionados (ISO3)
+paises_selecionados <- c("USA", "CHE", "NOR", "SGP", "NLD", "AUS", "CAN", "DEU", "JPN", "SWE")
 
-# Criar gráfico animado de barras para 1996–2020
- ggplot(areasagricolas_filtrado,
-                             aes(x = reorder(country, AG.LND.AGRI.K2),
-                                 y = AG.LND.AGRI.K2,
-                                 fill = country)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip() +
+# Nomes em português
+nomes_pt <- c(
+  USA = "Estados Unidos",
+  CHE = "Suíça",
+  NOR = "Noruega",
+  SGP = "Cingapura",
+  NLD = "Holanda",
+  AUS = "Austrália",
+  CAN = "Canadá",
+  DEU = "Alemanha",
+  JPN = "Japão",
+  SWE = "Suécia"
+)
+
+# Baixar dados do PIB per capita (1990-2023)
+dados_pib <- WDI(
+  country = paises_selecionados,
+  indicator = "NY.GDP.PCAP.CD",
+  start = 1990,
+  end = 2023
+) %>% rename(pib_pc = NY.GDP.PCAP.CD)
+
+# Adicionar coluna com nome em português
+dados_pib <- dados_pib %>% 
+  mutate(País = nomes_pt[iso3c])
+
+# Gráfico da evolução do PIB per capita com nomes em português na legenda
+ggplot(dados_pib, aes(x = year, y = pib_pc, color = País)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 1.5) +
   labs(
-    title = "Área Agrícola por País (1996–2020)",
-    subtitle = "Ano: {closest_state}",
-    x = "País",
-    y = "Área Agrícola (km²)"
+    title = "Evolução do PIB per capita (US$ corrente) de 10 países selecionados (1990-2023)",
+    x = "Ano",
+    y = "PIB per capita (US$)",
+    color = "País"
   ) +
-  scale_y_continuous(labels = comma) +
-  theme_minimal(base_size = 14) +
-  transition_states(year, transition_length = 2, state_length = 1) +
-  ease_aes("cubic-in-out")
+  theme_minimal() +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  theme(legend.position = "bottom")
 
 ```
 
 ## 
 
-## Evolução da Área de Terra Agrícola (2020)
+## Comparação do PIB per capita em 2020 entre os 10 países selecionados
 
-Este gráfico destaca a evolução da área agrícola nos 10 maiores países em 2020. Os dados revelam que Índia, China, Estados Unidos e Brasil continuam liderando em extensão de terras destinadas à atividade agropecuária. Ao longo desse período, nota-se relativa estabilidade na hierarquia entre os países, embora pequenas variações anuais indiquem ajustes no uso do solo, influenciados por políticas setoriais, demandas econômicas e alterações na produção agrícola. A liderança tende a se concentrar em países com grandes territórios, o que não necessariamente reflete maior produtividade. No caso brasileiro, observa-se um crescimento gradual da área agrícola, sinalizando a continuidade da expansão do setor agropecuário no país.
+Esse gráfico faz uma comparação direta do PIB per capita em 2020 para os mesmos 10 países do primeiro gráfico.
+
+**Destaques:**
+
+-   **Estados Unidos, Noruega e Suíça** aparecem no topo, com os maiores PIBs per capita, mostrando a forte diferença entre as economias mais ricas e o Brasil.
+
+-    O **Brasil**, embora com um PIB per capita menor, está posicionado abaixo desses países desenvolvidos, o que indica o quanto ainda há espaço para crescimento econômico e melhorias no padrão de vida.
+
+-    Essa comparação evidencia desigualdades globais de renda e desenvolvimento econômico.
 
 ```{r}
 #| label: grafico-corte
 #| warning: false
 #| echo: false
 
-# Filtrar dados apenas para 2015–2020
-areasagricolas_2015_2020 <- areasagricolas_filtrado %>%
-  filter(year >= 2020, year <= 2020, !is.na(AG.LND.AGRI.K2)) %>%
-  arrange(year, desc(AG.LND.AGRI.K2))
+# Filtrar dados para o ano de 2020
+dados_2020 <- dados_pib %>% filter(year == 2020)
 
-# Criar gráfico animado de barras para 2015–2020
-  ggplot(areasagricolas_2015_2020,
-                            aes(x = reorder(country, AG.LND.AGRI.K2),
-                                y = AG.LND.AGRI.K2,
-                                fill = country)) +
+# Gráfico de barras para 2020 com nomes em português
+ggplot(dados_2020, aes(x = reorder(País, pib_pc), y = pib_pc, fill = País)) +
   geom_col(show.legend = FALSE) +
   coord_flip() +
   labs(
-    title = "Área Agrícola por País (2020)",
-    subtitle = "Ano: {closest_state}",
+    title = "PIB per capita (US$ corrente) em 2020 - 10 países selecionados",
     x = "País",
-    y = "Área Agrícola (km²)"
+    y = "PIB per capita (US$)"
   ) +
-  scale_y_continuous(labels = comma) +
-  theme_minimal(base_size = 14) +
-  transition_states(year, transition_length = 2, state_length = 1) +
-  ease_aes("cubic-in-out")
+  theme_minimal() +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$"))
 
 ```
 
-## Área de Terra Agrícola no Brasil (1996–2020)
+## Evolução do PIB per capita do Brasil (1990–2023)
 
-O gráfico apresenta a evolução da área agrícola no Brasil entre os anos de 1996 e 2020, revelando uma tendência de crescimento contínuo ao longo do período. Destacam-se momentos de expansão mais intensa, especialmente na segunda metade dos anos 2000, impulsionados pelo fortalecimento do agronegócio e pela expansão de culturas como a soja, além da atividade pecuária. Esse avanço ocorreu principalmente nas regiões Centro-Oeste e Norte do país. O aumento constante da área utilizada para a agricultura evidencia a crescente relevância do setor agropecuário na economia nacional. Por outro lado, o processo de ampliação das fronteiras agrícolas levanta debates importantes sobre sustentabilidade, conservação ambiental e uso racional dos recursos naturais.
+Aqui o foco é só no Brasil, mostrando o crescimento do PIB per capita em dólares ao longo de mais de 30 anos.
+
+**Destaques:**
+
+-    O Brasil mostra uma tendência geral de crescimento no PIB per capita, com algumas fases de estagnação ou queda, que podem ser associadas a crises econômicas e períodos de recessão.
+
+-    A evolução reflete o desenvolvimento econômico do país e variações no padrão de vida da população.
+
+-    Esse gráfico é importante para compreender como o Brasil tem avançado em termos econômicos e identificar períodos de desafio econômico.
 
 ```{r}
 #| label: grafico-brasil
 #| warning: false
 #| echo: false
 
-# Filtrar dados do Brasil entre 1996 e 2020
-brasil_agricola <- areasagricolas_filtrado %>%
-  filter(country == "Brazil", year >= 1996, year <= 2020)
+# Baixar dados do PIB per capita do Brasil
+dados_brasil <- WDI(
+  country = "BR",
+  indicator = "NY.GDP.PCAP.CD",
+  start = 1990,
+  end = 2023
+) %>% rename(pib_pc = NY.GDP.PCAP.CD)
 
-# Criar gráfico de série temporal
-graf_brasil <- ggplot(brasil_agricola, aes(x = year, y = AG.LND.AGRI.K2)) +
-  geom_line(color = "#2E8B57", size = 1.2) +
-  geom_point(color = "#2E8B57", size = 2) +
-  scale_y_continuous(labels = comma) +
+# Gráfico da evolução do PIB per capita do Brasil
+ggplot(dados_brasil, aes(x = year, y = pib_pc)) +
+  geom_line(color = "blue", size = 1.2) +
+  geom_point(color = "blue", size = 1.5) +
   labs(
-    title = "Evolução da Área Agrícola no Brasil (1996–2020)",
+    title = "Evolução do PIB per capita do Brasil (US$ corrente, 1990-2023)",
     x = "Ano",
-    y = "Área Agrícola (km²)"
+    y = "PIB per capita (US$)"
   ) +
-  theme_minimal(base_size = 14)
-
-# Exibir gráfico
-print(graf_brasil)
+  theme_minimal() +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$"))
 ```
