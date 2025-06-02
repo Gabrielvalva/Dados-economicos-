@@ -1,0 +1,115 @@
+---
+title: "**Dívida Líquida do Setor Público: Análise Temporal com Animação**"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: carregar-pacotes
+#| include: false
+
+# install.packages('tidyverse')
+# install.packages("GetBCBData")
+# install.packages("gganimate") 
+# install.packages("transformr") 
+# install.packages("scales")
+# install.packages("viridis")
+# install.packages("gifski")
+# install.packages("ggplot2")
+# install.packages("magick")
+
+library(ggplot2)
+library(gifski)
+library(GetBCBData)
+library(tidyverse)
+library(gganimate)
+library(transformr)
+library(scales)
+library(lubridate)
+library(magick)
+```
+
+```{r}
+
+
+```
+
+## Introdução
+
+A **dívida líquida do setor público** é um dos principais indicadores fiscais para avaliar a sustentabilidade das contas públicas de um país. Reflete o saldo devedor líquido, levando em conta os ativos e passivos do governo e do Banco Central.
+
+Neste trabalho, exploramos a trajetória da dívida líquida do setor público brasileiro desde o ano 2000, com base em dados extraídos diretamente do Banco Central do Brasil, e utilizamos uma animação para facilitar a visualização das tendências temporais.
+
+```{r}
+#| label: carregar-dados
+#| message: false
+#| warning: false
+#| echo: false
+
+options(bitmapType = "cairo")
+
+my.id <- c(divida_liquida = 4468)
+
+df.bcb <- gbcbd_get_series(
+  id = my.id,
+  first.date = '2000-01-01',
+  last.date = Sys.Date(),
+  format.data = 'long',
+  use.memoise = TRUE,
+  cache.path = tempdir(),
+  do.parallel = FALSE
+)
+
+df.bcb <- df.bcb %>%
+  mutate(ano = year(ref.date))
+```
+
+## 
+
+## Visualização Animada da Dívida Líquida
+
+O gráfico animado abaixo mostra a evolução da dívida líquida do setor público ao longo do tempo, destacando os saldos em cada ponto da série.
+
+```{r}
+#| label: gerar-animacao
+#| warning: false
+#| echo: false
+#| fig.show: animate
+
+p <- ggplot(df.bcb, aes(x = ref.date, y = value)) +
+  geom_line(color = "#1f77b4", size = 1.4) +
+  geom_point(color = "#e74c3c", size = 3, alpha = 0.9) +
+  geom_text(data = tail(df.bcb, 1),
+            aes(label = paste0("R$ ", format(value, big.mark = ".", decimal.mark = ","))),
+            vjust = -1, hjust = 1, size = 5, fontface = "bold", color = "#1f77b4") +
+  geom_text(data = df.bcb %>% filter(month(ref.date) == 1),
+            aes(label = ano),
+            vjust = 1.5, hjust = 0.5, size = 3.5, color = "#1f77b4") +
+  scale_y_continuous(labels = label_comma(big.mark = ".", decimal.mark = ",")) +
+  labs(
+    title = "💰 Dívida Líquida do Setor Público",
+    subtitle = "Dados do Banco Central do Brasil | {frame_along}",
+    x = NULL,
+    y = "Saldo (R$ milhões)"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.background = element_rect(fill = "#ffffff", color = NA),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    plot.title = element_text(face = "bold", size = 20),
+    plot.subtitle = element_text(size = 14),
+    axis.title.y = element_text(face = "bold", margin = margin(r = 10)),
+    axis.text = element_text(color = "#333333")
+  ) +
+  transition_reveal(ref.date)
+
+animate(p, renderer = magick_renderer(), duration = 20, end_pause = 30)
+```
+
+## Conclusão
+
+A visualização revela a trajetória crescente da dívida líquida ao longo dos anos, com flutuações significativas que refletem mudanças na política fiscal, ciclos econômicos e eventos extraordinários, como crises econômicas ou sanitárias. O monitoramento constante desse indicador é crucial para a formulação de políticas públicas sustentáveis.
+
+```         
+```
