@@ -1,0 +1,164 @@
+---
+title: "EXPORTAÇÕES GLOBAIS: UMA HISTÓRIA EM MOVIMENTO"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: Notes
+#| include: false
+# Gabriel Valvassori Pereira Cesa  – Introdução e texto analítico
+# Kauê Mauricio Nascimento Silvano	 – Código de carregamento de pacotes e gráfico animado
+# Juan Wendel Zunino – Mapas estáticos de comparação entre 1990 e 2023
+```
+
+As exportações são um dos principais motores da economia global, refletindo o dinamismo e as mudanças nas relações econômicas internacionais. Desde o século XX, o crescimento das exportações tornou-se um indicador-chave do desenvolvimento econômico e da integração global.
+
+A partir da década de 1990, com a expansão das políticas de liberalização econômica e da globalização, as exportações mundiais experimentaram um crescimento significativo. Segundo dados do Banco Mundial (2023), o volume global de exportações passou por diversas fases, acompanhando oscilações econômicas e políticas internacionais.
+
+Entre 1990 e 2023, nota-se claramente uma transformação expressiva no cenário das exportações globais. Em 1990, o mapa mundial demonstrava uma concentração relativamente limitada de exportações em poucas economias avançadas, enquanto, em 2023, observa-se um aumento substancial na participação de economias emergentes, especialmente na Ásia e na América Latina (IPEA, 2023).
+
+Entre 2000 e 2008, ocorreu um crescimento acelerado das exportações mundiais, impulsionado principalmente pelo aumento da demanda chinesa por commodities e bens industriais. Entretanto, a crise financeira global de 2008-2009 provocou uma queda abrupta no comércio internacional, com uma recuperação gradual e desigual nos anos seguintes.
+
+Nos últimos anos, conflitos comerciais e a pandemia de COVID-19 impuseram novos desafios às exportações, afetando negativamente cadeias produtivas globais e destacando a importância da resiliência e diversificação econômica.
+
+```{r}
+#| label: load-packages
+#| include: false
+
+list.of.packages <- c(
+  "quarto",
+  "WDI",
+  "sf",
+  "rnaturalearth",
+  "tidyverse",
+  "ggthemes",
+  "gganimate",
+  "transformr",
+  "patchwork",
+  "knitr"
+)
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if (length(new.packages)) install.packages(new.packages)
+invisible(lapply(list.of.packages, library, character.only = TRUE, quietly = TRUE))
+
+# Opções globais do Quarto
+knitr::opts_chunk$set(
+  echo    = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+# Preparar shapefile do mundo
+world_sf <- rnaturalearth::ne_countries(returnclass = "sf") %>%
+  dplyr::filter(iso_a2 != "ATA")
+
+# Definir indicador de exportações e anos
+dice_indicador <- "NE.EXP.GNFS.CD"
+ano_inicio <- 1990
+ano_fim    <- 2023
+```
+
+```{r}
+#| label: animated-graphic
+#| echo: false
+#| warning: false
+
+# Obter dados para animação
+dados_anim <- WDI::WDI(
+  indicator = dice_indicador,
+  country   = "all",
+  start     = ano_inicio,
+  end       = ano_fim
+) %>% dplyr::rename(valor = all_of(dice_indicador))
+
+# Metadata para título e fonte
+meta <- as.data.frame(WDI::WDI_data$series) %>%
+  dplyr::filter(indicator == dice_indicador)
+
+# Construir gráfico animado
+p_anim <- world_sf %>%
+  dplyr::left_join(dados_anim, by = c("iso_a2" = "iso2c")) %>%
+  ggplot2::ggplot(aes(fill = valor)) +
+  ggplot2::geom_sf() +
+  ggplot2::scale_fill_viridis_c(
+    trans  = "log",
+    labels = scales::dollar_format(prefix = "US$ ", big.mark = ".", decimal.mark = ","),
+    guide  = ggplot2::guide_colorbar(barwidth = 20)
+  ) +
+  ggthemes::theme_map() +
+  ggplot2::theme(legend.position = "bottom") +
+  ggplot2::labs(
+    title   = paste0("Exportações em {closest_state}"),
+    fill    = NULL,
+    caption = paste0("Fonte: ", meta$sourceOrganization[1])
+  ) +
+  gganimate::transition_states(
+    states            = year,
+    transition_length = 6,
+    state_length      = 3,
+    wrap              = FALSE
+  )
+
+# Renderizar animação mais lenta com pausa no final
+gganimate::animate(
+  p_anim,
+  fps       = 10,
+  end_pause = 30
+)
+```
+
+Neste contexto, os gráficos animados apresentados no documento ilustram claramente essas oscilações ao longo do tempo, destacando especialmente as mudanças entre os anos de 1990 e 2023. Esta comparação evidencia o papel crescente de economias emergentes no comércio internacional e a mudança de dinâmicas econômicas globais. Tal visualização dinâmica facilita a compreensão da complexidade do comércio internacional, oferecendo insights valiosos para formuladores de políticas públicas e empresários.
+
+```{r}
+# Carregar dados para 1990 e 2023
+dados_1990 <- WDI::WDI(
+  indicator = dice_indicador,
+  country   = "all",
+  start     = ano_inicio,
+  end       = ano_inicio
+) %>% dplyr::rename(valor = all_of(dice_indicador))
+
+dados_2023 <- WDI::WDI(
+  indicator = dice_indicador,
+  country   = "all",
+  start     = ano_fim,
+  end       = ano_fim
+) %>% dplyr::rename(valor = all_of(dice_indicador))
+
+# Função para criar mapa estático
+criar_mapa <- function(dados, ano) {
+  world_sf %>%
+    dplyr::left_join(dados, by = c("iso_a2" = "iso2c")) %>%
+    ggplot2::ggplot(aes(fill = valor)) +
+    ggplot2::geom_sf() +
+    ggplot2::scale_fill_viridis_c(
+      trans  = "log",
+      labels = scales::dollar_format(prefix = "US$ ", big.mark = ".", decimal.mark = ","),
+      guide  = ggplot2::guide_colorbar(
+        barwidth    = 15,
+        label.theme = ggplot2::element_text(angle = 45, hjust = 1)
+      )
+    ) +
+    ggthemes::theme_map() +
+    ggplot2::theme(
+      legend.position = "bottom"
+    ) +
+    ggplot2::labs(
+      title = paste0("Exportações em ", ano),
+      fill  = NULL
+    )
+}
+
+mapa1 <- criar_mapa(dados_1990, ano_inicio)
+mapa2 <- criar_mapa(dados_2023, ano_fim)
+
+# Exibir mapas lado a lado
+mapa1 + mapa2 + patchwork::plot_layout(ncol = 2)
+```
+
+## REFERÊNCIAS
+
+BANCO MUNDIAL. *World Development Indicators*. 2023. Disponível em: https://data.worldbank.org/. Acesso em: 16 jun. 2025.
+
+INSTITUTO DE PESQUISA ECONÔMICA APLICADA – IPEA. *Comércio Exterior Brasileiro e Mundial: Análise e Perspectivas*. 2023. Disponível em: https://www.ipea.gov.br. Acesso em: 16 jun. 2025.
